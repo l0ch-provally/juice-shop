@@ -10,9 +10,7 @@ name: Security Scan with AutoProof
 
 on:
   push:
-    branches: [main, develop]
   pull_request:
-    branches: [main]
 
 env:
   AUTOPROOF_API_URL: ${{ vars.AUTOPROOF_API_URL || 'https://api.provally.io/api/v1' }}
