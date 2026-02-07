@@ -1,0 +1,57 @@
+# =============================================================================
+# GitHub Actions - AutoProof Integration Example
+# =============================================================================
+# Prerequisites:
+#   1. Set AUTOPROOF_API_KEY in repository secrets
+#   2. (Optional) Set AUTOPROOF_API_URL in repository variables
+#   3. (Optional) Set OPENGREP_VERSION in repository variables (default: v1.16.0)
+
+name: Security Scan with AutoProof
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  AUTOPROOF_API_URL: ${{ vars.AUTOPROOF_API_URL || 'https://api.provally.io/api/v1' }}
+  OPENGREP_VERSION: ${{ vars.OPENGREP_VERSION || 'v1.16.0' }}
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install OpenGrep
+        run: |
+          ARCH=$(uname -m)
+          case "$ARCH" in
+            x86_64|amd64) ARCH_SUFFIX="x86" ;;
+            aarch64|arm64) ARCH_SUFFIX="aarch64" ;;
+            *) echo "::error::Unsupported architecture: $ARCH"; exit 1 ;;
+          esac
+
+          BINARY_NAME="opengrep_manylinux_${ARCH_SUFFIX}"
+          DOWNLOAD_URL="https://github.com/opengrep/opengrep/releases/download/${OPENGREP_VERSION}/${BINARY_NAME}"
+
+          echo "Downloading OpenGrep ${OPENGREP_VERSION} (${BINARY_NAME})..."
+          curl -fsSL -o /usr/local/bin/opengrep "$DOWNLOAD_URL"
+          chmod +x /usr/local/bin/opengrep
+          opengrep --version
+
+      - name: Run OpenGrep SAST
+        run: opengrep scan --config=auto --json --output=sast-results.json . || true
+
+      - name: Upload to AutoProof
+        run: |
+          curl -X POST "$AUTOPROOF_API_URL/pipelines/sast-analysis" \
+            -H "X-API-Key: ${{ secrets.AUTOPROOF_API_KEY }}" \
+            -F "github_repo=${{ github.repository }}" \
+            -F "ref=${{ github.head_ref || github.ref_name }}" \
+            -F "commit_sha=${{ github.event.pull_request.head.sha || github.sha }}" \
+            -F "file=@sast-results.json" \
+            --fail-with-body
+
