@@ -46,11 +46,11 @@ jobs:
       - name: Upload to AutoProof
         run: |
           curl -X POST "$AUTOPROOF_API_URL/pipelines/sast-analysis" \
-		-H "X-API-Key: ${{ secrets.AUTOPROOF_API_KEY }}" \
-		-F "github_repo=${{ github.repository }}" \
-		-F "ref=${{ github.head_ref || github.ref_name }}" \
-		-F "commit_sha=${{ github.event.pull_request.head.sha || github.sha }}" \
-		-F "sast_tool=opengrep" \
-		-F "file=@sast-results.json" \
-		--fail-with-body
+            -H "X-API-Key: ${{ secrets.AUTOPROOF_API_KEY }}" \
+            -F "github_repo=${{ github.repository }}" \
+            -F "ref=${{ github.head_ref || github.ref_name }}" \
+            -F "commit_sha=${{ github.event.pull_request.head.sha || github.sha }}" \
+            -F "sast_tool=opengrep" \
+            -F "file=@sast-results.json" \
+            --fail-with-body
 
