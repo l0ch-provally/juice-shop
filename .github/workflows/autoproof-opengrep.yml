@@ -50,6 +50,7 @@ jobs:
             -F "github_repo=${{ github.repository }}" \
             -F "ref=${{ github.head_ref || github.ref_name }}" \
             -F "commit_sha=${{ github.event.pull_request.head.sha || github.sha }}" \
+	    -F "sast_tool=opengrep" \
             -F "file=@sast-results.json" \
             --fail-with-body
 
